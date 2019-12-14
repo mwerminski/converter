@@ -1,0 +1,4 @@
+*.mp3
+*.sqlite3
+**/__pycache__
+converter/migrations/*0*.py
