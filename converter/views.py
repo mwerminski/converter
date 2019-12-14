@@ -1,5 +1,6 @@
 
 from django.shortcuts import render
+from django.http import QueryDict
 from django.http import HttpResponse
 from rest_framework import viewsets, mixins, status
 from converter.models import Mp3
@@ -12,6 +13,7 @@ from rest_framework.parsers import FileUploadParser
 from converter.permissions import IsOwner
 from converter.convert_music import convert_to_mp3, add_info, add_cover
 from pydub.exceptions import PydubException
+import os
 
 class ConvertedFileViewSet(mixins.RetrieveModelMixin,
                            mixins.UpdateModelMixin,
@@ -74,18 +76,20 @@ class FileInfoViewSet(mixins.RetrieveModelMixin,
         else:
           return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    def retrieve(self, request, *args, **kwargs): #trzeba dodac zapisywanie szczegolow do pliku!
+    def retrieve(self, request, *args, **kwargs): #Done
         '''Get selected .mp3 file'''
         self.serializer_class = Mp3ResponseFileSerializer
         instance = self.get_object()
-
         data_file = self.get_serializer(instance)
-        add_info(Mp3InfoSerializer(instance), data_file['data_file'])
-        data_file.save()
-        add_cover(CoverImageSerializer(instance), data_file['data_file'])
-        data_file.save()
-        
-        # response = super().retrieve(request, *args, **kwargs)
+
+        path = "."+data_file.get_path(instance)
+        add_info(Mp3InfoSerializer(instance), path)
+        image_path = None
+
+        if CoverImageSerializer(instance)['cover'].value:
+            image_path = "."+CoverImageSerializer().get_path(instance)
+        add_cover(CoverImageSerializer(instance), path, image_path)
+
         return Response(data_file.data)
     
     def get_queryset(self):
@@ -104,25 +108,35 @@ class CoverImageViewSet(mixins.RetrieveModelMixin,
     http_method_names = ['put', 'delete']
     '''Cover image handler'''
 
-    def update(self, request, *args, **kwargs): #Done ?
+    def update(self, request, *args, **kwargs): #Done
         '''add / change image cover'''
         serializer_class = CoverImageSerializer
         kwargs['partial'] = True
+
+        instance = self.get_object()
+        if CoverImageSerializer(instance)['cover'].value:
+            image_path = "."+CoverImageSerializer().get_path(instance)
+            if os.path.exists(image_path):
+               os.remove(image_path)
+            
+
         response = super().update(request, *args, **kwargs)
         if(response.status_code == 200):
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
             return response
 
-    def destroy(self, request, *args, **kwargs): #Done ?
+    def destroy(self, request, *args, **kwargs): #Done
         '''Remove image cover'''
         kwargs['partial'] = True
-        request.date = {'cover' : None}
+        instance = self.get_object()
+        instance.cover.delete(save=True)
         response = super().update(request, *args, **kwargs)
         if(response.status_code == 200):
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
             return response
+
     
     def get_queryset(self):
         user = self.request.user

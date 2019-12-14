@@ -26,11 +26,17 @@ class CoverImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Mp3
         fields = ['cover']
+    
+    def get_path(self, instance):
+        return instance.cover.url
 
 class Mp3ResponseFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Mp3
         fields = ['data_file']
+
+    def get_path(self, instance):
+        return instance.data_file.url
 
 class FileResponseSerializer(serializers.ModelSerializer):
     id = serializers.ReadOnlyField()

@@ -1,4 +1,13 @@
 *.mp3
+*.png
+*.jpg
+*.JPG
+*.PNG
+*.wav
+*.WAV
 *.sqlite3
 **/__pycache__
 converter/migrations/*0*.py
+**/env
+**/.vscode
+music/*
