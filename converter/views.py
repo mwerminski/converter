@@ -63,6 +63,7 @@ class FileInfoViewSet(mixins.RetrieveModelMixin,
         '''Upload file and convert to .mp3 format'''
 
         try:
+            # request.POST._mutable = True
             convert_to_mp3(request.data)
         except PydubException as e:
             print(e)
@@ -71,10 +72,10 @@ class FileInfoViewSet(mixins.RetrieveModelMixin,
         file_serializer = FileSerializer(data=request.data)
 
         if file_serializer.is_valid():
-          obj = file_serializer.save(owner=self.request.user)
-          return Response({ "id" : str(obj.id)}, status=status.HTTP_201_CREATED)
+            obj = file_serializer.save(owner=self.request.user)
+            return Response({ "id" : str(obj.id)}, status=status.HTTP_201_CREATED)
         else:
-          return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
     def retrieve(self, request, *args, **kwargs): #Done
         '''Get selected .mp3 file'''

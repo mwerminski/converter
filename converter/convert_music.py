@@ -9,7 +9,6 @@ def convert_to_mp3(request_data):
         request_data['file_type'] = "mp3"
         mp3_data = request_data['data_file']
         sound = AudioSegment.from_file(mp3_data.file)
-        print(request_data)
         buf = BytesIO()
         request_data['data_file'].file = sound.export(buf ,format="mp3")
         request_data['data_file'].name = request_data['file_name']+".mp3"
