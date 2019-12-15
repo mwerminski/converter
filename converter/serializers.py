@@ -14,7 +14,7 @@ class Mp3InfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Mp3
         fields = ['file_name', 'file_type','file_type',
-        'header','title','artist','album','year','comment','zero_byte',
+        'title','artist','album','year','comment',
         'track','genre']
 
 class ShortMp3InfoSerliazer(serializers.ModelSerializer):

@@ -6,10 +6,10 @@ from PIL import Image
 
 def convert_to_mp3(request_data):
     if(request_data['file_type'] != "mp3"):
-        request_data['file_type'] = "mp3"
         mp3_data = request_data['data_file']
-        sound = AudioSegment.from_file(mp3_data.file)
+        sound = AudioSegment.from_file(mp3_data.file, format=request_data['file_type'])
         buf = BytesIO()
+        request_data['file_type'] = "mp3"
         request_data['data_file'].file = sound.export(buf ,format="mp3")
         request_data['data_file'].name = request_data['file_name']+".mp3"
 
@@ -35,7 +35,6 @@ def add_info(instance, file_path):
     tag.save(v2_version=3)
 
 def add_cover(instance, file_path, image_path):
-    print(image_path)
     if image_path != '.' and image_path:
         tag = ID3(file_path)
         mime = get_mime(image_path)
@@ -45,7 +44,7 @@ def add_cover(instance, file_path, image_path):
 
 def check_text(text):
     if repr(text) == '<BoundField value= errors=None>': return ''
-    else: return text
+    else: return text.value
 
 def get_mime(path):
     if '.png' in path.lower():

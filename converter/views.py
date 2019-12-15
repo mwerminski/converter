@@ -22,7 +22,7 @@ class ConvertedFileViewSet(mixins.RetrieveModelMixin,
     queryset = Mp3.objects.all()
     permission_classes = (IsOwner,)
     authentication_classes = (TokenAuthentication,)
-    http_method_names = ['get', 'put', 'delete']
+    http_method_names = ['get', 'put']
 
     def list(self, request, *args, **kwargs): #Done
         '''Get list of converted files '''
@@ -36,7 +36,9 @@ class ConvertedFileViewSet(mixins.RetrieveModelMixin,
     def update(self, request, *args, **kwargs):  #Done
         '''Update info about selected file'''
         self.serializer_class = Mp3InfoSerializer
-        return super().update(request, *args, **kwargs)
+        response = super().update(request, *args, **kwargs)
+        if response.status_code == 200: return Response(status=status.HTTP_204_NO_CONTENT)
+        else: return response
 
     def retrieve(self, request, *args, **kwargs): #Done
         '''Get tag info about selected file'''
@@ -61,12 +63,9 @@ class FileInfoViewSet(mixins.RetrieveModelMixin,
 
     def create(self, request, *args, **kwargs): #Done
         '''Upload file and convert to .mp3 format'''
-
         try:
-            # request.POST._mutable = True
             convert_to_mp3(request.data)
         except PydubException as e:
-            print(e)
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         file_serializer = FileSerializer(data=request.data)
@@ -93,6 +92,22 @@ class FileInfoViewSet(mixins.RetrieveModelMixin,
 
         return Response(data_file.data)
     
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.serializer_class = Mp3ResponseFileSerializer
+        file_path = "."+self.get_serializer(instance).get_path(instance)
+        image_path = ""
+        if CoverImageSerializer(instance)['cover'].value:
+            image_path = "."+CoverImageSerializer().get_path(instance)
+        response = super().destroy(request, *args, **kwargs)
+
+        if os.path.exists(file_path) and response.status_code == 204:
+            os.remove(file_path)
+        if os.path.exists(image_path) and response.status_code == 204:
+            os.remove(image_path)
+
+        return response
+
     def get_queryset(self):
         user = self.request.user
         if(user.is_staff):
